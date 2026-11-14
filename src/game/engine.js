@@ -1,10 +1,10 @@
 import { getScenarioById } from "./scenarios";
 import { states } from './states';
-import { validateAnswer } from './answerValidator';
+import { validateAnswer, isRiskyChoice } from './answerValidator';
 
 export const initialState = {
   scenario: null, nodeId: null, score: 0, steps: 0,
-  history: [], lastDelta: 0, status: 'picking',
+  history: [], lastDelta: 0, status: 'picking', riskyChoices: 0,
 };
 
 export const reducer = (state, action) => {
@@ -43,6 +43,9 @@ export const reducer = (state, action) => {
         console.error(`Next node "${selectedAnswer.next}" not found in scenario "${scenario.id}".`);
         return state;
       }
+      const risky = isRiskyChoice(selectedAnswer);
+      let status = 'playing';
+      if (nextNode.end) status = risky ? 'gameover' : 'ending';
       return {
         ...state,
         nodeId: selectedAnswer.next,
@@ -50,7 +53,8 @@ export const reducer = (state, action) => {
         steps: state.steps + 1,
         history: [...state.history, { from: nodeId, label: selectedAnswer.label, points: selectedAnswer.points }],
         lastDelta: selectedAnswer.points ?? 0,
-        status: nextNode.end ? 'ending' : 'playing',
+        riskyChoices: state.riskyChoices + (risky ? 1 : 0),
+        status,
       };
     }
     case states[2]: // ENDING
@@ -63,27 +67,46 @@ export const reducer = (state, action) => {
   }
 };
 
-export function maxScore(s, id = s.start, memo = {}, visiting = new Set()) {
+export function getBestPath(s, id = s.start, memo = {}, visiting = new Set()) {
   if (memo[id] !== undefined) return memo[id];
   const node = s.nodes[id];
   if (!node) {
-    console.error(`maxScore: node "${id}" not found in scenario "${s.id}".`);
-    return (memo[id] = -Infinity);
+    console.error(`getBestPath: node "${id}" not found in scenario "${s.id}".`);
+    return (memo[id] = { score: -Infinity, path: [] });
   }
-  if (node.end) return (memo[id] = 0);
+  if (node.end) return (memo[id] = { score: 0, path: [] });
   if (visiting.has(id)) {
-    console.error(`maxScore: cycle detected at node "${id}" in scenario "${s.id}".`);
-    return -Infinity;
+    console.error(`getBestPath: cycle detected at node "${id}" in scenario "${s.id}".`);
+    return { score: -Infinity, path: [] };
   }
   if (!node.choices?.length) {
-    console.error(`maxScore: node "${id}" has no choices and is not an end node in scenario "${s.id}".`);
-    return (memo[id] = -Infinity);
+    console.error(`getBestPath: node "${id}" has no choices and is not an end node in scenario "${s.id}".`);
+    return (memo[id] = { score: -Infinity, path: [] });
   }
   visiting.add(id);
-  const best = Math.max(
-    ...node.choices.map(c => (c.points ?? 0) + maxScore(s, c.next, memo, visiting)));
+  let best = { score: -Infinity, path: [] };
+  for (const choice of node.choices) {
+    const rest = getBestPath(s, choice.next, memo, visiting);
+    const score = (choice.points ?? 0) + rest.score;
+    if (score > best.score) {
+      best = {
+        score,
+        path: [{ from: id, label: choice.label, points: choice.points ?? 0, next: choice.next }, ...rest.path],
+      };
+    }
+  }
   visiting.delete(id);
   return (memo[id] = best);
+}
+
+export function maxScore(s, id = s.start) {
+  return getBestPath(s, id).score;
+}
+
+export function getThreatLevel(riskyChoices) {
+  if (riskyChoices >= 2) return 'red';
+  if (riskyChoices >= 1) return 'yellow';
+  return 'green';
 }
 
 export function validateScenario(s) {

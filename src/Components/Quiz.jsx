@@ -1,13 +1,38 @@
-import { useState } from "react";
+import { useEffect, useReducer } from "react";
+import { useParams } from "react-router-dom";
+import { reducer, initialState } from "../game/engine";
+import { rateChoice } from "../game/answerValidator";
 
 export default function Quiz() {
-   const questions = ["a", "b", "c", "d"];
-   const [score, setScore] = useState(0);
+  const { topic } = useParams();
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-   function handleAnswer(question) {
-    console.log("Réponse choisie :", question);
-    setScore(score + 1);
+  useEffect(() => {
+    dispatch({ type: "START", scenarioId: topic });
+  }, [topic]);
+
+  if (state.status === "picking") {
+    return (
+      <div className="ui">
+        <div className="terminal-bar">
+          <span className="dot"></span>
+          <span className="dot"></span>
+          <span className="dot"></span>
+          <span className="title">root@cschamp:~</span>
+        </div>
+        <div className="terminal-body">
+          <h1>
+            No scenario for "{topic}" yet<span className="cursor"></span>
+          </h1>
+          <p className="prompt">Check the console for details.</p>
+        </div>
+      </div>
+    );
   }
+
+  const currentNode = state.scenario.nodes[state.nodeId];
+  const isEnding = state.status === "ending";
+
   return (
     <div className="ui">
       <div className="terminal-bar">
@@ -19,31 +44,46 @@ export default function Quiz() {
 
       <div className="terminal-body">
         <h1>
-          Welcome to csChamp<span className="cursor"></span>
+          {state.scenario.title}
+          <span className="cursor"></span>
         </h1>
-        <h2 className="prompt">Choose a topic</h2>
-        
-        
 
-       
+        <p className="prompt">
+          Score : {state.score} &middot; Step {state.steps}
+        </p>
 
-        <ul>
-          {questions.map((question, index) => (
-            <li key={index}>
-              <button onClick={() => handleAnswer(question)}>{question}</button>
-            </li>
-          ))}
-        </ul>
-        <h1>question</h1>
-        <input type="text" className="input-field" placeholder="Type your answer..." />
-        <button className="submit-button">Submit</button>
+        {state.lastDelta !== 0 && (
+          <p className={`feedback ${rateChoice({ points: state.lastDelta })}`}>
+            {state.lastDelta > 0 ? `+${state.lastDelta}` : state.lastDelta}
+          </p>
+        )}
 
-        <p className="score prompt">Score : {score}</p>
+        <p>{currentNode.text}</p>
+
+        {currentNode.evidence && (
+          <pre className="evidence-box">{currentNode.evidence}</pre>
+        )}
+
+        {isEnding ? (
+          <div className="end-screen">
+            <h2 className="prompt">Scenario complete</h2>
+            {currentNode.concept && <p>Concept: {currentNode.concept}</p>}
+            <button onClick={() => dispatch({ type: "START", scenarioId: topic })}>
+              Play again
+            </button>
+          </div>
+        ) : (
+          <ul>
+            {currentNode.choices.map((choice, index) => (
+              <li key={index}>
+                <button onClick={() => dispatch({ type: "PICKING", id: index })}>
+                  {choice.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
 }
-  
-
-  
-        

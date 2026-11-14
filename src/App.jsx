@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import "./App.css";
-import "./Components/UI.css";
-import UI from "./Components/UI";
-import Quiz from "./Components/Quiz";
+import "./components/UI.css";
+import UI from "./components/UI";
+import Quiz from "./components/Quiz";
 
 function App() {
   return (

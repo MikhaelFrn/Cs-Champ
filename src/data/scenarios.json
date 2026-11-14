@@ -1,0 +1,33 @@
+[
+  {
+    "id": "cybersecurity",
+    "title": "[DEV PLACEHOLDER] Replace with real content",
+    "start": "n1",
+    "nodes": {
+      "n1": {
+        "text": "This is a placeholder incident used to wire the engine to the UI. The content teammate will replace this scenario.",
+        "evidence": "Placeholder evidence line 1\nPlaceholder evidence line 2",
+        "choices": [
+          { "label": "Placeholder good choice", "next": "n2", "points": 10 },
+          { "label": "Placeholder bad choice", "next": "end-bad", "points": -10 }
+        ]
+      },
+      "n2": {
+        "text": "Placeholder follow-up step.",
+        "choices": [
+          { "label": "Finish safely", "next": "end-good", "points": 10 }
+        ]
+      },
+      "end-good": {
+        "end": true,
+        "text": "Placeholder: you handled it well.",
+        "concept": "Placeholder concept"
+      },
+      "end-bad": {
+        "end": true,
+        "text": "Placeholder: that made things worse.",
+        "concept": "Placeholder concept"
+      }
+    }
+  }
+]
