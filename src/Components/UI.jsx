@@ -1,11 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { scenarios } from "../game/scenarios";
 
 export default function UI() {
   const navigate = useNavigate();
-
-  function handleTopicClick() {
-    navigate("/quiz/cybersecurity");
-  }
 
   return (
     <div className="ui">
@@ -20,8 +17,16 @@ export default function UI() {
         <h1>
           Welcome to csChamp<span className="cursor"></span>
         </h1>
-        <h2 className="prompt">Choose a topic</h2>
-        <button onClick={handleTopicClick}>Cybersecurity</button>
+        <h2 className="prompt">Choose an incident</h2>
+        <ul>
+          {scenarios.map((scenario) => (
+            <li key={scenario.id}>
+              <button onClick={() => navigate(`/quiz/${scenario.id}`)}>
+                {scenario.title}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

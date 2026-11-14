@@ -156,3 +156,7 @@
   padding-top: 16px;
   border-top: 1px dashed var(--green-dim);
 }
+.end-screen.compromised h2 {
+  color: var(--red);
+  text-shadow: 0 0 8px var(--red);
+}

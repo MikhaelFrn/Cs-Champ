@@ -1,10 +1,11 @@
 import { useEffect, useReducer } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { reducer, initialState } from "../game/engine";
 import { rateChoice } from "../game/answerValidator";
 
 export default function Quiz() {
   const { topic } = useParams();
+  const navigate = useNavigate();
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
@@ -31,7 +32,8 @@ export default function Quiz() {
   }
 
   const currentNode = state.scenario.nodes[state.nodeId];
-  const isEnding = state.status === "ending";
+  const isEnding = state.status === "ending" || state.status === "gameover";
+  const isCompromised = state.status === "gameover";
 
   return (
     <div className="ui">
@@ -65,12 +67,12 @@ export default function Quiz() {
         )}
 
         {isEnding ? (
-          <div className="end-screen">
-            <h2 className="prompt">Scenario complete</h2>
+          <div className={`end-screen ${isCompromised ? "compromised" : "safe"}`}>
+            <h2 className="prompt">
+              {isCompromised ? "Scenario failed" : "Scenario complete"}
+            </h2>
             {currentNode.concept && <p>Concept: {currentNode.concept}</p>}
-            <button onClick={() => dispatch({ type: "START", scenarioId: topic })}>
-              Play again
-            </button>
+            <button onClick={() => navigate("/")}>Play again</button>
           </div>
         ) : (
           <ul>

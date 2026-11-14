@@ -44,8 +44,9 @@ export const reducer = (state, action) => {
         return state;
       }
       const risky = isRiskyChoice(selectedAnswer);
+      const resolved = 'win' in nextNode ? Boolean(nextNode.win) : !risky;
       let status = 'playing';
-      if (nextNode.end) status = risky ? 'gameover' : 'ending';
+      if (nextNode.end) status = resolved ? 'ending' : 'gameover';
       return {
         ...state,
         nodeId: selectedAnswer.next,
