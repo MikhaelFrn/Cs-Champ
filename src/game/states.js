@@ -1,0 +1,1 @@
+export const states = ['START', 'PICKING', 'ENDING', 'GAMEOVER'];

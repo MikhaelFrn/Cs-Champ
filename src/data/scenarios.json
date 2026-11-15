@@ -1,0 +1,385 @@
+[
+  {
+    "id": "phish-password-reset",
+    "title": "Urgent password reset email",
+    "concept": "Phishing",
+    "start": "n1",
+    "nodes": {
+      "n1": {
+        "text": "An email says your account will be locked in 1 hour unless you reset your password.",
+        "evidence": "From: it-support@c0mpany-help.example\nSubject: URGENT: reset your password now\nLink: http://company-login.reset-verify.example/login",
+        "choices": [
+          { "label": "Click the link and reset the password", "next": "end-compromised", "points": -10 },
+          { "label": "Inspect the sender domain and the link target", "next": "n2", "points": 10 },
+          { "label": "Forward it to your whole team to ask if they got it too", "next": "end-spread", "points": -5 }
+        ]
+      },
+      "n2": {
+        "text": "The sender domain uses a zero instead of an 'o', the link goes to an unrelated site, and the 1-hour deadline is a pressure tactic.",
+        "evidence": "Sender domain: c0mpany-help.example  (real domain: company.example)\nLink target: reset-verify.example\nTone: urgent threat + deadline",
+        "choices": [
+          { "label": "Reply to ask if it is real", "next": "end-risky", "points": -5 },
+          { "label": "Report it to the security team and delete it", "next": "end-safe", "points": 10 }
+        ]
+      },
+      "end-compromised": {
+        "end": true,
+        "text": "The page was a fake login form and the attacker now has your credentials.",
+        "concept": "Phishing indicators"
+      },
+      "end-spread": {
+        "end": true,
+        "text": "Forwarding put the malicious link in front of more people, and one of them clicked it.",
+        "concept": "Phishing response"
+      },
+      "end-risky": {
+        "end": true,
+        "text": "Replying confirmed to the attacker that your address is active, so you will get more targeted emails.",
+        "concept": "Phishing response"
+      },
+      "end-safe": {
+        "end": true,
+        "win": true,
+        "text": "Reporting it lets the team warn others and block the sender. Always check the sender and the link before acting.",
+        "concept": "Phishing indicators"
+      }
+    }
+  },
+
+  {
+    "id": "server-unreachable",
+    "title": "\"Server unreachable\"",
+    "concept": "Network troubleshooting",
+    "start": "n1",
+    "nodes": {
+      "n1": {
+        "text": "Students report that the class website intranet.school.example will not load. Your job is to find out why.",
+        "evidence": "Browser: \"This site can't be reached\"\nServer IP (from inventory): 192.0.2.10\nLast change: firewall update yesterday",
+        "choices": [
+          { "label": "Reboot the server right away", "next": "end-wasted", "points": -5 },
+          { "label": "Ping the server's IP address", "next": "n2", "points": 10 },
+          { "label": "Turn off the firewall to see if it helps", "next": "end-exposed", "points": -10 }
+        ]
+      },
+      "n2": {
+        "text": "The server answers the ping, so the machine is up and the network path works. The problem is higher up.",
+        "evidence": "> ping 192.0.2.10\nReply from 192.0.2.10: time=3ms\nReply from 192.0.2.10: time=2ms\n0% packet loss",
+        "choices": [
+          { "label": "Check that the name resolves to the right IP (DNS)", "next": "n3", "points": 10 },
+          { "label": "Reboot the server anyway", "next": "end-wasted", "points": -5 }
+        ]
+      },
+      "n3": {
+        "text": "DNS returns the correct IP, so name resolution is fine. Next, check whether the web service port is reachable.",
+        "evidence": "> nslookup intranet.school.example\nName:    intranet.school.example\nAddress: 192.0.2.10",
+        "choices": [
+          { "label": "Test the connection to port 443", "next": "n4", "points": 10 },
+          { "label": "Add the IP to every student's hosts file", "next": "end-workaround", "points": -5 }
+        ]
+      },
+      "n4": {
+        "text": "Port 443 times out from outside, but the web service is running and listening on the server. Something in between is blocking it.",
+        "evidence": "> Test-NetConnection 192.0.2.10 -Port 443\nTcpTestSucceeded : False\n\nOn the server: web service RUNNING, listening on 0.0.0.0:443",
+        "choices": [
+          { "label": "Review yesterday's firewall change", "next": "n5", "points": 10 },
+          { "label": "Disable the firewall completely", "next": "end-exposed", "points": -10 }
+        ]
+      },
+      "n5": {
+        "text": "Yesterday's update removed the rule that allows HTTPS traffic to the server.",
+        "evidence": "Firewall change log (yesterday):\n- REMOVED  allow tcp any -> 192.0.2.10:443\n+ ADDED    deny  tcp any -> 192.0.2.0/24:3306",
+        "choices": [
+          { "label": "Restore only the port 443 allow rule and document the fix", "next": "end-safe", "points": 10 },
+          { "label": "Allow all ports to that server so it never happens again", "next": "end-exposed", "points": -10 }
+        ]
+      },
+      "end-wasted": {
+        "end": true,
+        "text": "The reboot took 10 minutes and changed nothing. Guessing wastes time: test each layer in order.",
+        "concept": "Network troubleshooting"
+      },
+      "end-workaround": {
+        "end": true,
+        "text": "DNS was not the problem, so the hosts-file change did nothing, and it now has to be undone on every machine.",
+        "concept": "Network troubleshooting"
+      },
+      "end-exposed": {
+        "end": true,
+        "text": "The site works again, but the server is now open to the whole internet. Fix the specific rule, not the whole firewall.",
+        "concept": "Firewall rules"
+      },
+      "end-safe": {
+        "end": true,
+        "win": true,
+        "text": "Site restored with a minimal change. You isolated the problem in order: ping the IP, then DNS, then the port, then the firewall.",
+        "concept": "Network troubleshooting"
+      }
+    }
+  },
+
+  {
+    "id": "unusual-login",
+    "title": "Unusual login alert",
+    "concept": "Account compromise, MFA",
+    "start": "n1",
+    "nodes": {
+      "n1": {
+        "text": "You receive an automatic alert: someone signed in to your school account from a country you have never been to.",
+        "evidence": "Security alert - new sign-in\nTime: 03:12\nLocation: unknown country\nIP: 203.0.113.45\nDevice: Linux / unknown browser",
+        "choices": [
+          { "label": "Ignore it, it is probably a VPN glitch", "next": "end-compromised", "points": -10 },
+          { "label": "Open your account's sign-in activity page directly", "next": "n2", "points": 10 },
+          { "label": "Click the \"Wasn't me?\" link in the alert email", "next": "end-phished", "points": -5 }
+        ]
+      },
+      "n2": {
+        "text": "The sign-in was successful, and the session is still active. A new rule also forwards all your emails to an outside address.",
+        "evidence": "Active sessions:\n- Your laptop        (this device)\n- Linux, 203.0.113.45 (active now)\n\nMail rules:\n- NEW: forward all mail -> backup.inbox@mail.example",
+        "choices": [
+          { "label": "Sign out all other sessions", "next": "n3", "points": 10 },
+          { "label": "Delete the forwarding rule only", "next": "end-partial", "points": -5 }
+        ]
+      },
+      "n3": {
+        "text": "The attacker's session is closed. They still know your password, though, so they could sign in again.",
+        "evidence": "Active sessions:\n- Your laptop (this device)",
+        "choices": [
+          { "label": "Reset your password to a new, unique one", "next": "n4", "points": 10 },
+          { "label": "Keep the password, the session is gone anyway", "next": "end-relogin", "points": -10 }
+        ]
+      },
+      "n4": {
+        "text": "Password changed. Last step: make sure a stolen password is not enough next time, and clean up what the attacker left behind.",
+        "evidence": "Password: changed\nMFA: OFF\nMail rules: forward all mail -> backup.inbox@mail.example",
+        "choices": [
+          { "label": "Enable MFA and remove the forwarding rule", "next": "end-safe", "points": 10 },
+          { "label": "Skip MFA, it is annoying", "next": "end-partial", "points": -5 }
+        ]
+      },
+      "end-compromised": {
+        "end": true,
+        "text": "The attacker kept access for days, read your emails and used your account to phish your classmates.",
+        "concept": "Account compromise"
+      },
+      "end-phished": {
+        "end": true,
+        "text": "Links in security alerts can be fake too. Go to the account page directly, not through the email.",
+        "concept": "Phishing indicators"
+      },
+      "end-partial": {
+        "end": true,
+        "text": "You fixed one symptom, but the attacker still has a way back in. Contain first, then clean up.",
+        "concept": "Incident containment"
+      },
+      "end-relogin": {
+        "end": true,
+        "text": "An hour later the attacker signed in again with the same password.",
+        "concept": "Account compromise"
+      },
+      "end-safe": {
+        "end": true,
+        "win": true,
+        "text": "Account secured. Correct order: sign out sessions, reset the password, enable MFA, then remove anything the attacker changed.",
+        "concept": "MFA"
+      }
+    }
+  },
+
+  {
+    "id": "open-port-scan",
+    "title": "Open port found in a scan",
+    "concept": "Attack surface, firewall rules",
+    "start": "n1",
+    "nodes": {
+      "n1": {
+        "text": "The weekly scan of the school's web server shows an extra open port reachable from the internet.",
+        "evidence": "Scan of 198.51.100.20 (from outside)\nPORT     STATE  SERVICE\n22/tcp   open   ssh\n80/tcp   open   http\n443/tcp  open   https\n3306/tcp open   mysql   <- new",
+        "choices": [
+          { "label": "Close every port right now", "next": "end-outage", "points": -10 },
+          { "label": "Find out what is using port 3306", "next": "n2", "points": 10 },
+          { "label": "Ignore it, the database has a password", "next": "end-breach", "points": -10 }
+        ]
+      },
+      "n2": {
+        "text": "Port 3306 is the MySQL database used by the website. The website runs on the same server.",
+        "evidence": "Process on 3306: mysqld\nConfig: bind-address = 0.0.0.0  (all interfaces)\nConnections in the last 7 days: only 127.0.0.1 (local)",
+        "choices": [
+          { "label": "Confirm with the site's owner who needs database access", "next": "n3", "points": 10 },
+          { "label": "Stop the database service", "next": "end-outage", "points": -10 }
+        ]
+      },
+      "n3": {
+        "text": "The owner confirms that only the website on the same server needs the database. Nobody connects from outside.",
+        "evidence": "Owner: \"Only the web app talks to MySQL, locally. No outside access needed.\"",
+        "choices": [
+          { "label": "Block 3306 from outside and bind MySQL to localhost", "next": "n4", "points": 10 },
+          { "label": "Block 22, 80 and 443 too, just in case", "next": "end-outage", "points": -10 }
+        ]
+      },
+      "n4": {
+        "text": "The change is applied. How do you know it really worked?",
+        "evidence": "Firewall: + deny tcp any -> 198.51.100.20:3306\nmysqld: bind-address = 127.0.0.1",
+        "choices": [
+          { "label": "Rescan from outside and check that the website still works", "next": "end-safe", "points": 10 },
+          { "label": "Assume it worked and close the ticket", "next": "end-unverified", "points": -5 }
+        ]
+      },
+      "end-outage": {
+        "end": true,
+        "text": "The website went down for everyone. Close only what is not needed, and check before changing rules.",
+        "concept": "Firewall rules"
+      },
+      "end-breach": {
+        "end": true,
+        "text": "Bots guessed the weak database password within days and copied the student table.",
+        "concept": "Attack surface"
+      },
+      "end-unverified": {
+        "end": true,
+        "text": "A typo in the rule meant the port was still open. Without a rescan, nobody noticed.",
+        "concept": "Verify changes"
+      },
+      "end-safe": {
+        "end": true,
+        "win": true,
+        "text": "Port 3306 is closed from outside and the website still works. You reduced the attack surface without breaking anything.",
+        "concept": "Attack surface"
+      }
+    }
+  },
+
+  {
+    "id": "usb-parking-lot",
+    "title": "USB drive found in the parking lot",
+    "concept": "Social engineering, physical security",
+    "start": "n1",
+    "nodes": {
+      "n1": {
+        "text": "On your way into school, you find a USB drive on the ground in the parking lot.",
+        "evidence": "Label on the drive: \"SALARIES 2026 - CONFIDENTIAL\"\nLocation: staff parking, near the entrance",
+        "choices": [
+          { "label": "Plug it into your school computer to find the owner", "next": "end-compromised", "points": -10 },
+          { "label": "Plug it into your personal laptop instead", "next": "end-compromised-home", "points": -10 },
+          { "label": "Pick it up without plugging it in", "next": "n2", "points": 10 },
+          { "label": "Leave it where it is", "next": "end-left", "points": -5 }
+        ]
+      },
+      "n2": {
+        "text": "At your desk, a classmate says: \"Just try it on the old spare PC, it isn't connected to anything.\"",
+        "evidence": "Spare PC: shares the school Wi-Fi, logged in with a teacher's account",
+        "choices": [
+          { "label": "Plug it into the spare PC", "next": "end-compromised", "points": -10 },
+          { "label": "Refuse and take it to the IT/security team", "next": "n3", "points": 10 }
+        ]
+      },
+      "n3": {
+        "text": "The IT team thanks you and asks a few questions.",
+        "evidence": "IT: \"Where and when did you find it? Did anyone plug it in?\"",
+        "choices": [
+          { "label": "Give the place and time, and confirm nobody plugged it in", "next": "end-safe", "points": 10 },
+          { "label": "Drop it on their desk and leave", "next": "end-incomplete", "points": -5 }
+        ]
+      },
+      "end-compromised": {
+        "end": true,
+        "text": "The drive pretended to be a keyboard and ran commands in seconds. The attacker now has access to the school network.",
+        "concept": "Social engineering"
+      },
+      "end-compromised-home": {
+        "end": true,
+        "text": "Your personal laptop is infected, and the next time you sign in to your school account the attacker gets your password.",
+        "concept": "Social engineering"
+      },
+      "end-left": {
+        "end": true,
+        "text": "Ten minutes later a curious staff member picked it up and plugged it in. Reporting is better than ignoring.",
+        "concept": "Physical security"
+      },
+      "end-incomplete": {
+        "end": true,
+        "text": "Without details, IT could not check the cameras or warn others about more drives in the parking lot.",
+        "concept": "Incident reporting"
+      },
+      "end-safe": {
+        "end": true,
+        "win": true,
+        "text": "IT found two more drives nearby and warned all staff. A tempting label is a classic lure: do not plug it in, report it.",
+        "concept": "Social engineering"
+      }
+    }
+  },
+
+  {
+    "id": "password-breach",
+    "title": "\"Your password appears in a breach\"",
+    "concept": "Credential hygiene",
+    "start": "n1",
+    "nodes": {
+      "n1": {
+        "text": "You get a notification saying your email and password were found in a data breach of an online shop you used.",
+        "evidence": "\"Your credentials for shop.example were exposed in a data breach.\nClick here to secure your account: http://secure-check.example\"\nYou used the same password for your school email and your gaming account.",
+        "choices": [
+          { "label": "Click the link in the notification", "next": "end-phished", "points": -10 },
+          { "label": "Check the breach yourself on the shop's official site", "next": "n2", "points": 10 },
+          { "label": "Ignore it, it is only a shopping account", "next": "end-takeover", "points": -10 }
+        ]
+      },
+      "n2": {
+        "text": "The shop confirms the breach. Since you reused the password, attackers can try it on your other accounts.",
+        "evidence": "shop.example: \"Passwords from our 2026 breach may be exposed.\"\nSame password used on: shop.example, school email, gaming account",
+        "choices": [
+          { "label": "Change the password on the shop only", "next": "end-reuse", "points": -5 },
+          { "label": "Change it on every account that used it", "next": "n3", "points": 10 }
+        ]
+      },
+      "n3": {
+        "text": "You need three new passwords. How do you pick them?",
+        "evidence": "Accounts to update: 3",
+        "choices": [
+          { "label": "Use one new strong password for all three", "next": "end-reuse", "points": -5 },
+          { "label": "Generate a unique password for each one with a password manager", "next": "n4", "points": 10 },
+          { "label": "Write them on a sticky note on your screen", "next": "end-sticky", "points": -5 }
+        ]
+      },
+      "n4": {
+        "text": "Each account now has a unique password. One last protection is available.",
+        "evidence": "Password manager: 3 entries saved\nMFA on school email: OFF",
+        "choices": [
+          { "label": "Turn on MFA, starting with your email account", "next": "end-safe", "points": 10 },
+          { "label": "Skip it, unique passwords are enough", "next": "end-partial", "points": -5 }
+        ]
+      },
+      "end-phished": {
+        "end": true,
+        "text": "The \"secure your account\" page was a phishing site that collected your password again.",
+        "concept": "Phishing indicators"
+      },
+      "end-takeover": {
+        "end": true,
+        "text": "Attackers tried the leaked password on other sites (credential stuffing) and took over your school email.",
+        "concept": "Credential stuffing"
+      },
+      "end-reuse": {
+        "end": true,
+        "text": "As long as one password is shared between accounts, one leak can open all of them.",
+        "concept": "Password reuse"
+      },
+      "end-sticky": {
+        "end": true,
+        "text": "Anyone walking past your desk can read your passwords. Store them in a password manager.",
+        "concept": "Credential hygiene"
+      },
+      "end-partial": {
+        "end": true,
+        "text": "Better, but if a password leaks again nothing else protects your email, which can reset all your other accounts.",
+        "concept": "MFA"
+      },
+      "end-safe": {
+        "end": true,
+        "win": true,
+        "text": "Fully protected: changed everywhere, unique passwords from a manager, and MFA on your most important account.",
+        "concept": "Credential hygiene"
+      }
+    }
+  }
+]

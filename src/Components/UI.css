@@ -1,0 +1,162 @@
+.ui {
+  border: 1px solid var(--green-dim);
+  background: var(--panel);
+  box-shadow: 0 0 25px var(--green-glow), inset 0 0 40px rgba(0, 255, 102, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Barre de titre de la fenêtre terminal */
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--green-dim);
+  background: rgba(0, 255, 102, 0.08);
+  font-size: 14px;
+}
+.terminal-bar .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid var(--green);
+}
+.terminal-bar .title {
+  margin-left: 8px;
+  opacity: 0.8;
+}
+
+.terminal-body {
+  padding: 24px 28px 32px;
+}
+
+.ui h1,
+.ui h2 {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--green);
+  text-shadow: 0 0 8px var(--green-glow);
+}
+.ui h1 {
+  font-size: 40px;
+  margin: 0 0 16px;
+}
+.ui h2 {
+  font-size: 20px;
+  margin: 24px 0 12px;
+  opacity: 0.85;
+}
+
+.prompt::before {
+  content: '> ';
+  color: var(--green-dim);
+}
+
+/* Curseur clignotant */
+.cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  margin-left: 6px;
+  background: var(--green);
+  vertical-align: -0.1em;
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.ui button {
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--green);
+  background: transparent;
+  border: 1px solid var(--green);
+  padding: 10px 20px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.ui button::before {
+  content: '[ ';
+}
+.ui button::after {
+  content: ' ]';
+}
+.ui button:hover,
+.ui button:focus-visible {
+  background: var(--green);
+  color: var(--bg);
+  box-shadow: 0 0 15px var(--green-glow);
+  outline: none;
+}
+
+.ui ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.ui ul button {
+  width: 100%;
+}
+
+.topic {
+  margin-top: 12px;
+  color: var(--green-dim);
+}
+
+.score {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--green-dim);
+  font-size: 22px;
+}
+
+.back-link {
+  color: var(--green-dim);
+  text-decoration: none;
+}
+.back-link:hover {
+  color: var(--green);
+  text-shadow: 0 0 8px var(--green-glow);
+}
+
+.evidence-box {
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: rgba(0, 255, 102, 0.05);
+  border: 1px solid var(--green-dim);
+  border-radius: 4px;
+  white-space: pre-wrap;
+  font-size: 15px;
+  color: var(--green-dim);
+}
+
+.feedback {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 8px 0;
+}
+.feedback.good {
+  color: var(--green);
+}
+.feedback.bad {
+  color: var(--red);
+}
+.feedback.neutral {
+  color: var(--green-dim);
+}
+
+.end-screen {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--green-dim);
+}
+.end-screen.compromised h2 {
+  color: var(--red);
+  text-shadow: 0 0 8px var(--red);
+}
